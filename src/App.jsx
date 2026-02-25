@@ -784,15 +784,13 @@ export default function App() {
 
   // Load saved preferences on mount
   useState(() => {
-    (async () => {
-      try {
-        const saved = await window.storage.get("packright-prefs");
-        if (saved?.value) {
-          const prefs = JSON.parse(saved.value);
-          setForm(f => ({ ...f, ...prefs, tripName: "" }));
-        }
-      } catch (_) {}
-    })();
+    try {
+      const saved = localStorage.getItem("packright-prefs");
+      if (saved) {
+        const prefs = JSON.parse(saved);
+        setForm(f => ({ ...f, ...prefs, tripName: "" }));
+      }
+    } catch (_) {}
   }, []);
 
   const handleGenerate = async () => {
@@ -801,7 +799,7 @@ export default function App() {
     setTimeout(() => document.querySelector(".results")?.scrollIntoView({ behavior: "smooth" }), 100);
     try {
       const { tripName, ...prefs } = form;
-      await window.storage.set("packright-prefs", JSON.stringify(prefs));
+      localStorage.setItem("packright-prefs", JSON.stringify(prefs));
     } catch (_) {}
   };
 
