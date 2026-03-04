@@ -444,10 +444,11 @@ function generateList(form) {
   const {
     nights, destination, season, accommodation, tripType,
     activities, lightToiletries, hasBeard, wearsSuit,
-    bringMacBook, smartness
+    bringMacBook, smartness, dayTrip
   } = form;
 
-  const n           = parseInt(nights) || 0;
+  const isDayTrip   = !!dayTrip;
+  const n           = isDayTrip ? 0 : (parseInt(nights) || 0);
   const isWorkDay   = tripType === "workday";
   const isOvernight = n >= 1;
 
@@ -476,32 +477,34 @@ function generateList(form) {
 
   // ── TOILETRIES ─────────────────────────────────────────────────────────
   const toiletries = [];
-  if (lightToiletries) {
-    toiletries.push(
-      "Toothbrush", "Interdentals", "Toothpaste", "Mouthwash",
-      "Deodorant", "Hairbrush", "Hair bobbles", "Face wipes",
-      "Dry shampoo", "Aftershave"
-    );
-  } else {
-    toiletries.push(
-      "Toothbrush", "Toothbrush charger", "Interdentals", "Floss",
-      "Toothpaste", "Mouthwash", "Face wash", "Shampoo",
-      "Hair conditioner", "Shower gel", "Hair loss shampoo",
-      "Silicone scrubber", "Deodorant", "Anti-sweat", "Hairbrush",
-      "Hair bobbles", "Dry shampoo", "Air freshener", "Face wipes",
-      "Tissues", "Aftershave", "Moisturiser"
-    );
-    if (hasBeard) toiletries.push("Beard oil", "Beard brush");
+  if (!isDayTrip) {
+    if (lightToiletries) {
+      toiletries.push(
+        "Toothbrush", "Interdentals", "Toothpaste", "Mouthwash",
+        "Deodorant", "Hairbrush", "Hair bobbles", "Face wipes",
+        "Dry shampoo", "Aftershave"
+      );
+    } else {
+      toiletries.push(
+        "Toothbrush", "Toothbrush charger", "Interdentals", "Floss",
+        "Toothpaste", "Mouthwash", "Face wash", "Shampoo",
+        "Hair conditioner", "Shower gel", "Hair loss shampoo",
+        "Silicone scrubber", "Deodorant", "Anti-sweat", "Hairbrush",
+        "Hair bobbles", "Dry shampoo", "Air freshener", "Face wipes",
+        "Tissues", "Aftershave", "Moisturiser"
+      );
+      if (hasBeard) toiletries.push("Beard oil", "Beard brush");
+    }
   }
 
   // ── ILEOSTOMY ──────────────────────────────────────────────────────────
-  const ileo = [
+  const ileo = isDayTrip ? ["Daytime ileostomy supplies bag"] : [
     `${ileoDays} ileostomy bags`,
     `${ileoDays} rings`,
     `${ileoDays} disposable bags`,
     "Belt", "Conti wipes", "Bag of dry wipes",
     "Anti-adhesion spray", "Barrier spray",
-    "Scissors", "Shoe bag", "Stickers", "Ointment",
+    "Scissors", "Stickers", "Ointment",
     "Daytime ileostomy supplies bag"
   ];
 
@@ -512,13 +515,14 @@ function generateList(form) {
 
   // ── MEDICATIONS ────────────────────────────────────────────────────────
   const meds = [];
-  if (isWorkDay) {
+  if (isDayTrip) {
+    // Fixed single-day quantities for any day trip
     meds.push(
       "10 loperamide", "9 Imodium instants",
       "1 sertraline", "1 multivitamin",
       "2 isotonic gels", "2 paracetamol",
       "ORS dispersible tablets", "Nutritional supplements",
-      "Glucose monitor supplies", "Pill box"
+      "Pill box"
     );
   } else {
     meds.push(`${loperamide} loperamide`);
@@ -533,12 +537,12 @@ function generateList(form) {
       "Antacid tablets", "16 paracetamol"
     );
     if (n >= 2) meds.push("Sudafed");
-    meds.push("Plasters", "Masks", "Pearls", "Pill boxes", "Glucose monitor supplies");
+    meds.push("Plasters", "Masks", "Pearls", "Pill boxes");
   }
 
   // ── CLOTHING ───────────────────────────────────────────────────────────
   const clothing = [];
-  if (!isWorkDay) {
+  if (!isDayTrip) {
     clothing.push(`${clothingCount} pants`);
     clothing.push(`${clothingCount} socks`);
     if (tshirts > 0) clothing.push(`${tshirts} t-shirt${tshirts > 1 ? "s" : ""}`);
@@ -584,40 +588,39 @@ function generateList(form) {
 
   // ── OUTERWEAR ──────────────────────────────────────────────────────────
   const outerwear = [];
-  if (isWorkDay) {
-    outerwear.push("Hoody");
-  } else {
-    if (isWinter || isMixed) outerwear.push("Coat", "Scarf", "Gloves");
-    outerwear.push("Waterproof", "Umbrella");
-    if (isSummer || isMixed) outerwear.push("Tilley hat", "Sun hat");
-    if (isWinter || isMixed) outerwear.push("Hat / cap");
-  }
+  if (isWinter || isMixed) outerwear.push("Coat", "Scarf", "Gloves");
+  outerwear.push("Hoody", "Waterproof", "Umbrella");
+  if (isSummer || isMixed) outerwear.push("Tilley hat", "Sun hat");
+  if (isWinter || isMixed) outerwear.push("Hat / cap");
 
   // ── TECH ───────────────────────────────────────────────────────────────
   const tech = [];
-  if (isWorkDay) {
-    tech.push(
-      "Phone", "Charging cables", "Work laptop", "Work laptop charger",
-      "Headphones", "Handheld fan", "Charger plug"
-    );
+  tech.push("Phone", "Charging cables", "Headphones", "Handheld fan");
+  if (isWorkDay) tech.push("Work laptop", "Work laptop charger", "Work phone");
+  if (isDayTrip) {
+    tech.push("Charger plug");
+    if (destination === "eu")   tech.push("EU adapter");
+    if (destination === "intl") tech.push("International adapter");
   } else {
-    tech.push("Phone", "Charging cables", "Headphones", "Handheld fan");
-    tech.push("USB power adapter", "Wireless travel charger", "Watch cable", "Power bank");
+    tech.push("USB power adapter", "Power bank");
+    if (n >= 7) tech.push("Wireless travel charger");
+    tech.push("Watch cable", "Phone cable");
     if (bringMacBook) tech.push("MacBook", "MacBook charger", "MacBook USB-C cable");
     if (destination === "eu")   tech.push("EU adapter", "Bag weighing scale");
     if (destination === "intl") tech.push("International adapter", "Bag weighing scale");
     if (isUKDomestic && n >= 2) tech.push("Extension lead");
-    if (n >= 3)            tech.push("Kindle");
-    if (n >= 5)            tech.push("iPad");
+    if (n >= 3)             tech.push("Kindle");
+    if (n >= 5)             tech.push("iPad");
     if (isSummer && n >= 3) tech.push("Bigger handheld fan");
-    if (isSummer)          tech.push("Neck fan");
+    if (isSummer)           tech.push("Neck fan");
   }
 
   // ── BAGS & ESSENTIALS ──────────────────────────────────────────────────
   const bags = [];
-  if (isWorkDay) {
+  if (isDayTrip) {
+    bags.push("Bag", "Tiny towel", "Water bottle", "Wallet");
+    if (isWorkDay) bags.push("ID card");
     bags.push(
-      "Bag", "Water bottle", "Wallet", "ID card", "Work phone",
       "Towel", "Carrier bag", "Glasses", "Glasses cloth",
       "Lens cleaner", "Hand sanitiser"
     );
@@ -625,22 +628,25 @@ function generateList(form) {
     bags.push("Backpack");
     if (n >= 3) bags.push("Compact backpack");
     bags.push(
-      "Water bottle", "Earplugs", "Glasses", "Glasses case",
+      "Water bottle", "Tiny towel", "Earplugs", "Glasses", "Glasses case",
       "Glasses cloth", "Lens cleaner", "Hand sanitiser",
       "Carrier bags", "Wallet", "Eye shade", "Sweat bands"
     );
+    if (isWorkDay) bags.push("ID card");
     if (abroad) bags.push("Travel towel", "Travel pillow", "Neck pillow", "Prophylactics");
   }
 
   // ── DOCUMENTS ─────────────────────────────────────────────────────────
   const docs = [];
-  if (!isWorkDay && abroad) {
+  if (abroad) {
     docs.push("Passport", "Travel insurance documents", "EHIC / GHIC card");
   }
 
   // ── FOOD & DRINK ───────────────────────────────────────────────────────
   const food = ["Diabetes-friendly sweets"];
-  if (!isWorkDay) {
+  if (isWorkDay) {
+    food.push("Lunch", "Low-carb snacks");
+  } else {
     if (n >= 1) food.push("Low-carb snacks");
     if (n >= 2) food.push("Isotonic drinks");
   }
@@ -754,6 +760,7 @@ function Category({ cat, checkedItems, onToggle }) {
 const DEFAULT_FORM = {
   tripName:        "",
   nights:          1,
+  dayTrip:         false,
   destination:     "uk",
   season:          "mild",
   accommodation:   "hotel",
@@ -813,7 +820,7 @@ export default function App() {
   const totalItems   = categories.reduce((s, c) => s + c.items.length, 0);
   const checkedCount = checkedItems.size;
   const progress     = totalItems ? Math.round((checkedCount / totalItems) * 100) : 0;
-  const n            = parseInt(form.nights) || 0;
+  const n            = form.dayTrip ? 0 : (parseInt(form.nights) || 0);
 
   const copyList = () => {
     if (!categories.length) return;
@@ -860,17 +867,26 @@ export default function App() {
             <div className="form-group">
               <label>Trip type</label>
               <select value={form.tripType} onChange={e => update("tripType", e.target.value)}>
-                <option value="workday">Work day trip</option>
+                <option value="workday">Work</option>
                 <option value="holiday">Holiday</option>
                 <option value="visit">Family / friend visit</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label>Nights away</label>
-              <input type="number" min="0" max="30"
-                value={form.nights} onChange={e => update("nights", e.target.value)} />
+              <label>Day trip</label>
+              <Toggle on={form.dayTrip}
+                onToggle={() => update("dayTrip", !form.dayTrip)}
+                label={form.dayTrip ? "No overnight stay" : "Includes nights away"} />
             </div>
+
+            {!form.dayTrip && (
+              <div className="form-group">
+                <label>Nights away</label>
+                <input type="number" min="1" max="30"
+                  value={form.nights} onChange={e => update("nights", e.target.value)} />
+              </div>
+            )}
 
             <div className="form-group">
               <label>Destination</label>
@@ -891,30 +907,34 @@ export default function App() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label>Accommodation</label>
-              <select value={form.accommodation} onChange={e => update("accommodation", e.target.value)}>
-                <option value="hotel">Hotel</option>
-                <option value="selfcatering">Self-catering / Airbnb</option>
-                <option value="family">Family / friends' home</option>
-                <option value="shared">Shared / hostel / group house</option>
-              </select>
-            </div>
+            {!form.dayTrip && (
+              <div className="form-group">
+                <label>Accommodation</label>
+                <select value={form.accommodation} onChange={e => update("accommodation", e.target.value)}>
+                  <option value="hotel">Hotel</option>
+                  <option value="selfcatering">Self-catering / Airbnb</option>
+                  <option value="family">Family / friends' home</option>
+                  <option value="shared">Shared / hostel / group house</option>
+                </select>
+              </div>
+            )}
 
-            {/* Style slider — full width */}
-            {form.tripType !== "workday" && (
+            {/* Style slider — hidden for workday and day trips */}
+            {form.tripType !== "workday" && !form.dayTrip && (
               <div className="form-group full">
                 <label>Clothing style</label>
                 <StyleSlider value={form.smartness} onChange={v => update("smartness", v)} />
               </div>
             )}
 
-            <div className="form-group">
-              <label>Toiletry kit</label>
-              <Toggle on={form.lightToiletries}
-                onToggle={() => update("lightToiletries", !form.lightToiletries)}
-                label={form.lightToiletries ? "Light kit (basics only)" : "Full kit"} />
-            </div>
+            {!form.dayTrip && (
+              <div className="form-group">
+                <label>Toiletry kit</label>
+                <Toggle on={form.lightToiletries}
+                  onToggle={() => update("lightToiletries", !form.lightToiletries)}
+                  label={form.lightToiletries ? "Light kit (basics only)" : "Full kit"} />
+              </div>
+            )}
 
             <div className="form-group">
               <label>MacBook</label>
@@ -965,9 +985,10 @@ export default function App() {
                 <div>
                   <h2>{form.tripName || "Packing List"}</h2>
                   <div className="trip-badge">
-                    {destLabel} · {n} night{n !== 1 ? "s" : ""} ·{" "}
-                    {form.season.charAt(0).toUpperCase() + form.season.slice(1)} ·{" "}
-                    {styleLabel(form.smartness)} · {totalItems} items
+                    {destLabel} · {form.dayTrip ? "Day trip" : `${n} night${n !== 1 ? "s" : ""}`} ·{" "}
+                    {form.season.charAt(0).toUpperCase() + form.season.slice(1)}
+                    {!form.dayTrip && form.tripType !== "workday" ? ` · ${styleLabel(form.smartness)}` : ""}
+                    {" "}· {totalItems} items
                   </div>
                 </div>
                 <div className="results-actions">
